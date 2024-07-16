@@ -18,70 +18,80 @@
     </div>
   </template>
   
-  <script>
-  export default {
-    data() {
-      return {
-        loggedInUser: '',
-        recipient: '',
-        message: ''
-      };
-    },
-    mounted() {
-      this.checkLoggedIn();
-      this.loadConversation();
-    },
-    methods: {
-      checkLoggedIn() {
-        this.loggedInUser = localStorage.getItem('loggedInUser');
-        if (!this.loggedInUser) {
-          this.$router.push('/login'); 
-        }
-      },
-      sendMessage() {
-        if (!this.message.trim()) {
-          alert('El mensaje no puede estar vacío.');
-          return;
-        }
-  
-        if (!this.recipient.trim()) {
-          alert('El destinatario no puede estar vacío.');
-          return;
-        }
-  
-        if (localStorage.getItem(this.recipient)) {
-          const conversationKey = this.getConversationKey(this.loggedInUser, this.recipient);
-          let conversation = JSON.parse(localStorage.getItem(conversationKey)) || [];
-          conversation.push({ sender: this.loggedInUser, message: this.message });
-          localStorage.setItem(conversationKey, JSON.stringify(conversation));
-          
-          this.displayMessage(this.loggedInUser, this.message);
-          this.message = '';
-        } else {
-          alert('El usuario destinatario no está registrado.');
-        }
-      },
-      displayMessage(sender, message) {
-        const messageContainer = document.createElement('div');
-        messageContainer.classList.add('message');
-        messageContainer.textContent = `${sender}: ${message}`;
-        this.$refs.chatMessages.appendChild(messageContainer);
-        messageContainer.scrollIntoView({ behavior: 'smooth' });
-      },
-      loadConversation() {
-        const conversationKey = this.getConversationKey(this.loggedInUser, this.recipient);
-        const conversation = JSON.parse(localStorage.getItem(conversationKey)) || [];
-        this.$refs.chatMessages.innerHTML = '';
-        conversation.forEach(msg => {
-          this.displayMessage(msg.sender, msg.message);
-        });
-      },
-      getConversationKey(user1, user2) {
-        return [user1, user2].sort().join('-');
+<script>
+export default {
+  data() {
+    return {
+      loggedInUser: '',
+      recipient: '',
+      message: ''
+    };
+  },
+  mounted() {
+    this.checkLoggedIn();
+  },
+  watch: {
+    recipient(newRecipient, oldRecipient) {
+      if (newRecipient !== oldRecipient) {
+        this.loadConversation();
       }
     }
-  };
-  </script>
+  },
+  methods: {
+    checkLoggedIn() {
+      this.loggedInUser = localStorage.getItem('loggedInUser');
+      if (!this.loggedInUser) {
+        this.$router.push('/login');
+      } else {
+        this.loadConversation();
+      }
+    },
+    sendMessage() {
+      if (!this.message.trim()) {
+        alert('El mensaje no puede estar vacío.');
+        return;
+      }
+
+      if (!this.recipient.trim()) {
+        alert('El destinatario no puede estar vacío.');
+        return;
+      }
+
+      if (localStorage.getItem(this.recipient)) {
+        const conversationKey = this.getConversationKey(this.loggedInUser, this.recipient);
+        let conversation = JSON.parse(localStorage.getItem(conversationKey)) || [];
+        conversation.push({ sender: this.loggedInUser, message: this.message });
+        localStorage.setItem(conversationKey, JSON.stringify(conversation));
+
+        this.displayMessage(this.loggedInUser, this.message);
+        this.message = '';
+      } else {
+        alert('El usuario destinatario no está registrado.');
+      }
+    },
+    displayMessage(sender, message) {
+      const messageContainer = document.createElement('div');
+      messageContainer.classList.add('message');
+      messageContainer.textContent = `${sender}: ${message}`;
+      this.$refs.chatMessages.appendChild(messageContainer);
+      messageContainer.scrollIntoView({ behavior: 'smooth' });
+    },
+    loadConversation() {
+      if (!this.recipient.trim()) return;
+      const conversationKey = this.getConversationKey(this.loggedInUser, this.recipient);
+      const conversation = JSON.parse(localStorage.getItem(conversationKey)) || [];
+      this.$refs.chatMessages.innerHTML = '';
+      conversation.forEach(msg => {
+        this.displayMessage(msg.sender, msg.message);
+      });
+    },
+    getConversationKey(user1, user2) {
+      return [user1, user2].sort().join('-');
+    }
+  }
+};
+</script>
+
   
   <style scoped>
   .body {
